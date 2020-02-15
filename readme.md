@@ -2,12 +2,28 @@
 
 Personal terraform playground.
 
-## Apps
+## Modules
+
+### postgres
+
+Creates a dockerized postgres container and a docker network.
+
+### vault
+
+Creates a dockerized vault dev instance, connected to an existing docker network.
+
+#### vault/engines
+
+Creates a vault secrets engine. Currently supported engines include: 
+
+* postgres secrets engine
+
+## Projects
 
 ### Vault
 
-Creates a HashiCorp vault instance with terraform.
+Instantiates a postgres and vault module, connecting the two via a shared docker network.
 
-## Postgres
+### Vault Engine
 
-
+Instantiates a vault/engine module, connecting the secret engine to an existing Vault project.
