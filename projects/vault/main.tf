@@ -1,5 +1,5 @@
 module "postgres" {
-  source = "./modules/postgres"
+  source = "../../modules/postgres"
 
   providers = {
     docker = docker
@@ -7,7 +7,7 @@ module "postgres" {
 }
 
 module "vault" {
-  source = "./modules/vault"
+  source = "../../modules/vault"
 
   providers = {
     docker = docker
