@@ -14,6 +14,6 @@ output "db_docker_port" {
   value = module.postgres.db_info.port
 }
 
-output "db_table" {
-  value = module.postgres.db_info.name
+output "db" {
+  value = module.postgres.db_info.db
 }
