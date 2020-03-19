@@ -3,23 +3,29 @@ resource "random_password" "postgres_master" {
   special = false
 }
 
+resource "random_string" "container_name" {
+  length  = 8
+  special = false
+  upper   = false
+}
+
 resource "docker_network" "insight" {
-  name   = "insight"
+  name   = var.docker_network_name
   driver = "bridge"
 }
 
 resource "docker_image" "postgres" {
-  name = "postgres:10"
+  name = var.postgres_options.db_version
 }
 
 resource "docker_container" "postgres" {
-  name  = "postgres"
+  name  = "postgres-${random_string.container_name.result}"
   image = docker_image.postgres.latest
   start = true
 
   ports {
     internal = 5432
-    external = 5432
+    external = var.postgres_options.db_port
   }
 
   env = [
@@ -35,6 +41,6 @@ resource "docker_container" "postgres" {
   ]
 
   networks_advanced {
-    name = var.docker_network.network_name
+    name = var.docker_network_name
   }
 }
