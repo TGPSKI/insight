@@ -1,52 +1,39 @@
-data "vault_policy_document" "mount" {
-  rule {
-    path         = "sys/auth/oidc"
-    capabilities = ["create", "read", "update", "delete", "sudo"]
-    description  = "Mount the OIDC auth method"
-  }
+locals {
+  groups = [
+    {
+      group_name = okta_group.all_access.name
+      policies = [
+        vault_policy.all_access.name
+      ]
+    },
+    {
+      group_name = okta_group.database_only.name
+      policies = [
+        vault_policy.database_only.name
+      ]
+    },
+    {
+      group_name = okta_group.kv.name
+      policies = [
+        vault_policy.kv.name
+      ]
+    }
+  ]
 }
 
-data "vault_policy_document" "configure" {
-  rule {
-    path         = "auth/oidc/*"
-    capabilities = ["create", "read", "update", "delete", "list"]
-    description  = "Configure the OIDC auth method"
-  }
+resource "vault_okta_auth_backend" "dev" {
+  description     = "Allow vault login with okta"
+  path            = "okta"
+  bypass_okta_mfa = true
+  organization    = var.org_name
+  base_url        = var.base_url
+  token           = var.api_token
 }
 
-data "vault_policy_document" "write" {
-  rule {
-    path         = "sys/policies/acl/*"
-    capabilities = ["create", "read", "update", "delete", "list"]
-    description  = "Write ACL policies"
-  }
+resource "vault_okta_auth_backend_group" "dev" {
+  # Associate Okta groups with policies within Vault. 
+  count      = length(local.groups)
+  path       = vault_okta_auth_backend.dev.path
+  group_name = local.groups[count.index]["group_name"]
+  policies   = local.groups[count.index]["policies"]
 }
-
-data "vault_policy_document" "list" {
-  rule {
-    path         = "sys/mounts"
-    capabilities = ["read"]
-    description  = "List available secrets engines to retrieve accessor ID"
-  }
-}
-
-resource "vault_policy" "mount" {
-  name   = "mount"
-  policy = data.vault_policy_document.mount.hcl
-}
-
-resource "vault_policy" "configure" {
-  name   = "configure"
-  policy = data.vault_policy_document.configure.hcl
-}
-
-resource "vault_policy" "write" {
-  name   = "write"
-  policy = data.vault_policy_document.write.hcl
-}
-
-resource "vault_policy" "list" {
-  name   = "list"
-  policy = data.vault_policy_document.list.hcl
-}
-

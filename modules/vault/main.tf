@@ -22,4 +22,3 @@ resource "docker_container" "vault" {
     name = var.docker_network_name
   }
 }
-
