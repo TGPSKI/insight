@@ -39,13 +39,14 @@ resource "vault_policy" "database_only" {
 }
 
 resource "vault_policy" "kv" {
-  name   = "database"
+  name   = "kv"
   policy = data.vault_policy_document.kv.hcl
 }
 
 resource "okta_group" "all_access" {
   name        = "all_access"
   description = "all access"
+  users       = ["00u48a8e0MNf5ZXUZ4x6"]
 }
 
 resource "okta_group_roles" "admin" {
@@ -56,10 +57,11 @@ resource "okta_group_roles" "admin" {
 resource "okta_group" "database_only" {
   name        = "database_only"
   description = "database only"
+  users       = ["00u489dbfONUICvcr4x6"]
 }
 
 resource "okta_group" "kv" {
   name        = "kv"
   description = "kv"
+  users       = ["00u48at47NjLLFGCg4x6"]
 }
-
