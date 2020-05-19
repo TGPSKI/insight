@@ -15,7 +15,8 @@ resource "docker_container" "vault" {
   env = [
     "VAULT_DEV_ROOT_TOKEN_ID=${var.vault_dev_token}",
     "VAULT_DEV_LISTEN_ADDRESS=${var.vault_listen_ip}",
-    "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+    "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+    "VAULT_LOG_LEVEL=debug"
   ]
 
   networks_advanced {

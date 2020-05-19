@@ -36,3 +36,34 @@ module "vault_postgres" {
 
   pg_conn_url = "postgres://${local.db_user}:${local.db_pass}@${local.db_docker_ip}:${local.db_docker_port}/${local.db}?sslmode=disable"
 }
+
+
+data "vault_policy_document" "tfe" {
+  rule {
+    path         = "*"
+    capabilities = ["create", "read", "update", "delete", "list", "sudo"]
+    description  = "TFE role policy"
+  }
+}
+
+resource "vault_policy" "tfe" {
+  name   = "tfe"
+  policy = data.vault_policy_document.tfe.hcl
+}
+
+resource "vault_token" "tfe" {
+  role_name = "tfe"
+  policies  = ["tfe"]
+  renewable = false
+}
+
+resource "vault_token_auth_backend_role" "tfe" {
+  role_name        = "tfe"
+  allowed_policies = ["tfe"]
+  orphan           = true
+  renewable        = false
+}
+
+output "foo" {
+  value = vault_token.tfe.client_token
+}
