@@ -6,5 +6,21 @@ provider "vault" {
   # This will default to using $VAULT_ADDR
   # But can be set explicitly
   address = "http://127.0.0.1:8200"
-  token   = "vault_dev"
+  token   = data.terraform_remote_state.stage2.outputs.token
+}
+
+data "terraform_remote_state" "stage2" {
+  backend = "local"
+
+  config = {
+    path = "../stage2/terraform.tfstate"
+  }
+}
+
+data "terraform_remote_state" "stage3" {
+  backend = "local"
+
+  config = {
+    path = "../stage3/terraform.tfstate"
+  }
 }

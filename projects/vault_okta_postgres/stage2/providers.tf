@@ -9,8 +9,10 @@ provider "vault" {
   token   = "vault_dev"
 }
 
-provider "okta" {
-  org_name  = var.org_name
-  base_url  = var.base_url
-  api_token = var.api_token
+data "terraform_remote_state" "stage1" {
+  backend = "local"
+
+  config = {
+    path = "../stage1/terraform.tfstate"
+  }
 }

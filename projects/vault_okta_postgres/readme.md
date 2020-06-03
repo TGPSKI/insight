@@ -1,11 +1,23 @@
 # Vault Okta Postgres
 
-Two stage project demonstrating an end to end postgres, vault, vault -> okta, and vault -> postgres implementation.
+This is a full end to end demo of Vault, Okta, and Postgres working together to issue temporary database credentials.
 
-Apply stage 1 first, followed by stage 2.
+## Stage 1
 
-The two stage approach is required due to a lack of provider `depends_on` functionality. See:
+Creates postgres database and vault cluster via docker provider.
 
-* https://github.com/hashicorp/terraform/issues/2430
-* https://github.com/hashicorp/terraform/issues/13018
-* https://github.com/hashicorp/terraform/issues/17847
+## Stage 2
+
+Creates a terraform vault role for running changes to Vault with terraform. This stage initializes the test database and creates two database roles, ro and rw.
+
+## Stage 3
+
+Creates a Okta authentication server with custom claims and a Okta OAuth app.
+
+## Stage 4
+
+Creates a Vault authentication backend with remote state from Stage 3 and sets up authentication roles.
+
+## Stage 5
+
+Installs a postgres secrets engine to apps/test-app.

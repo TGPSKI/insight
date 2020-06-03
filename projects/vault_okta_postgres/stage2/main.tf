@@ -1,69 +1,56 @@
-data "terraform_remote_state" "vault" {
-  backend = "local"
-
-  config = {
-    path = "../stage1/terraform.tfstate"
-  }
-}
-
-locals {
-  db_user        = data.terraform_remote_state.vault.outputs.db_user
-  db_pass        = data.terraform_remote_state.vault.outputs.db_pass
-  db_docker_ip   = data.terraform_remote_state.vault.outputs.db_docker_ip
-  db_docker_port = data.terraform_remote_state.vault.outputs.db_docker_port
-  db             = data.terraform_remote_state.vault.outputs.db
-}
-
-module "vault_okta" {
-  source = "../../../modules/vault/okta"
-
-  providers = {
-    okta  = okta
-    vault = vault
-  }
-
-  org_name  = var.org_name
-  base_url  = var.base_url
-  api_token = var.api_token
-}
-
-module "vault_postgres" {
-  source = "../../../modules/vault/engines/postgres"
-
-  providers = {
-    vault = vault
-  }
-
-  pg_conn_url = "postgres://${local.db_user}:${local.db_pass}@${local.db_docker_ip}:${local.db_docker_port}/${local.db}?sslmode=disable"
-}
-
-
-data "vault_policy_document" "tfe" {
+data "vault_policy_document" "terraform" {
+  # Additional capabilities needed to modify system paths
+  # See 'sudo' descrption here https://www.vaultproject.io/docs/concepts/policies#capabilities
   rule {
     path         = "*"
     capabilities = ["create", "read", "update", "delete", "list", "sudo"]
-    description  = "TFE role policy"
+    description  = "Allows Terraform to manage paths broadly across Vault."
+  }
+
+  rule {
+    path         = "auth/*"
+    capabilities = ["create", "update", "delete", "read", "sudo"]
+    description  = "Manage authentication backends broadly across Vault"
+  }
+
+  rule {
+    path         = "sys/auth/*"
+    capabilities = ["create", "update", "delete", "sudo"]
+    description  = "Create, modify, and delete authentication backends"
+  }
+
+  rule {
+    path         = "sys/mounts/*"
+    capabilities = ["create", "update", "delete", "sudo"]
+    description  = "Mount and manage secret backends broadly across Vault"
+  }
+
+  rule {
+    path         = "auth/token/create"
+    capabilities = ["create", "update", "delete"]
+    description  = "Allow terraform role to create short-lived tokens, used as an automatic process by the Vault provider."
   }
 }
 
-resource "vault_policy" "tfe" {
-  name   = "tfe"
-  policy = data.vault_policy_document.tfe.hcl
+resource "vault_policy" "terraform" {
+  name   = "terraform"
+  policy = data.vault_policy_document.terraform.hcl
 }
 
-resource "vault_token" "tfe" {
-  role_name = "tfe"
-  policies  = ["tfe"]
+resource "vault_token" "terraform" {
+  role_name = "terraform"
+  policies  = [vault_policy.terraform.name]
   renewable = false
+
+  depends_on = [
+    vault_token_auth_backend_role.terraform,
+    vault_policy.terraform
+  ]
 }
 
-resource "vault_token_auth_backend_role" "tfe" {
-  role_name        = "tfe"
-  allowed_policies = ["tfe"]
+resource "vault_token_auth_backend_role" "terraform" {
+  role_name        = "terraform"
+  allowed_policies = [vault_policy.terraform.name]
   orphan           = true
   renewable        = false
-}
-
-output "foo" {
-  value = vault_token.tfe.client_token
 }
